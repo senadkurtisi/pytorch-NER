@@ -3,14 +3,16 @@ import torch
 from torch.utils.data import DataLoader
 
 from dataloader import CoNLLDataset
+from model import NERClassifier
 
 
-def train_loop(config, writer):
+def train_loop(config, writer, device):
     """Implements training of the model.
 
     Arguments:
         config (dict): Contains configuration of the pipeline
         writer: tensorboardX writer object
+        device: device on which to map the model and data
     """
     # Define dataloader hyper-parameters
     train_hyperparams = {
@@ -29,3 +31,6 @@ def train_loop(config, writer):
     valid_set = CoNLLDataset(config, config["dataset_path"]["validation"])
     train_loader = DataLoader(train_set, **train_hyperparams)
     valid_loader = DataLoader(valid_set, **valid_hyperparams)
+
+    model = NERClassifier(config)
+    model = model.to(device)
