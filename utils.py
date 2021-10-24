@@ -44,3 +44,29 @@ def train_loop(config, writer, device):
         lr=train_config["learning_rate"],
         weight_decay=config["l2_penalty"]
     )
+
+    criterion = torch.nn.CrossEntropyLoss(reduction="none")
+
+    for epoch in train_config["num_of_epochs"]:
+        print("Epoch:", epoch)
+        model.train()
+
+        for x, y, padding_mask in train_loader:
+            x, y = x.to(device), y.to(device)
+            padding_mask = padding_mask.to(device)
+
+            optimizer.zero_grad()
+            y_pred = model(x, padding_mask)
+
+            unpadded_mask = torch.logical_not(padding_mask)
+            y = y[unpadded_mask]
+            y_pred = y_pred[unpadded_mask]
+
+            loss = criterion()
+            # Update model weights
+            loss.backward()
+            torch.nn.utils.clip_grad_norm_(
+                model.parameters(),
+                train_config["gradient_clipping"]
+            )
+            optimizer.step()
