@@ -19,18 +19,19 @@ class CoNLLDataset(Dataset):
         self.data = [sample.replace("\n", "") for sample in self.data]
 
         # Load the vocabulary mappings
-        with open(config["token_to_idx_path"], "r", encoding="utf8") as f:
-            self._token_to_idx = json.load(f)
-        # Set the default value for the OOV tokens
-        self._token_to_idx = defaultdict(lambda: self._token_to_idx["UNK"],
-                                         self._token_to_idx)
+        with open(config["word2idx_path"], "r", encoding="utf8") as f:
+            self._word2idx = json.load(f)
+        self._idx2word = {str(idx): word for word, idx in self._word2idx.items()}
 
-        with open(config["idx_to_token_path"], "r", encoding="utf8") as f:
-            self._idx_to_token = json.load(f)
+        # Set the default value for the OOV tokens
+        self._token_to_idx = defaultdict(
+            lambda: self._word2idx[config["OOV_token"]],
+            self._word2idx
+        )
 
         self._separator = separator
-        self._PADD_token = config["PADD_token"]
-        self._PADD_label = config["PADD_label"]
+        self._PAD_token = config["PAD_token"]
+        self._PAD_label = config["PAD_label"]
         self._max_len = config["max_len"]
 
         self._dataset_size = len(self.data)
@@ -51,11 +52,12 @@ class CoNLLDataset(Dataset):
         labels = labels[:self._max_len]
         padding_size = self._max_len - sample_size
         if padding_size > 0:
-            tokens += [self._PADD_token for _ in range(padding_size)]
-            labels += [self._PADD_label for _ in range(padding_size)]
+            tokens += [self._PAD_token for _ in range(padding_size)]
+            labels += [self._PAD_label for _ in range(padding_size)]
 
         # Apply the vocabulary mapping to the input tokens
-        tokens = [self._token_to_idx[token] for token in tokens]
+        tokens = [token.strip().lower() for token in tokens]
+        tokens = [self._word2idx[token] for token in tokens]
         tokens = torch.Tensor(tokens).long()
 
         # Adapt labels for PyTorch consumption
