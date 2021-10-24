@@ -24,8 +24,10 @@ class CoNLLDataset(Dataset):
         self._idx2word = {str(idx): word for word, idx in self._word2idx.items()}
 
         # Set the default value for the OOV tokens
-        self._token_to_idx = defaultdict(lambda: self._token_to_idx["UNK"],
-                                         self._token_to_idx)
+        self._token_to_idx = defaultdict(
+            lambda: self._word2idx[config["OOV_token"]],
+            self._word2idx
+        )
 
         self._separator = separator
         self._PADD_token = config["PADD_token"]
