@@ -19,8 +19,8 @@ class CoNLLDataset(Dataset):
         self.data = [sample.replace("\n", "") for sample in self.data]
 
         # Load the vocabulary mappings
-        with open(config["token_to_idx_path"], "r", encoding="utf8") as f:
-            self._token_to_idx = json.load(f)
+        with open(config["word2idx_path"], "r", encoding="utf8") as f:
+            self._word2idx = json.load(f)
         # Set the default value for the OOV tokens
         self._token_to_idx = defaultdict(lambda: self._token_to_idx["UNK"],
                                          self._token_to_idx)
@@ -55,7 +55,7 @@ class CoNLLDataset(Dataset):
             labels += [self._PADD_label for _ in range(padding_size)]
 
         # Apply the vocabulary mapping to the input tokens
-        tokens = [self._token_to_idx[token] for token in tokens]
+        tokens = [self._word2idx[token] for token in tokens]
         tokens = torch.Tensor(tokens).long()
 
         # Adapt labels for PyTorch consumption
