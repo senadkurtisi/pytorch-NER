@@ -56,6 +56,7 @@ class CoNLLDataset(Dataset):
             labels += [self._PAD_label for _ in range(padding_size)]
 
         # Apply the vocabulary mapping to the input tokens
+        tokens = [token.strip().lower() for token in tokens]
         tokens = [self._word2idx[token] for token in tokens]
         tokens = torch.Tensor(tokens).long()
 
