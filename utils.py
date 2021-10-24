@@ -134,3 +134,9 @@ def train_loop(config, writer, device):
                 train_config["gradient_clipping"]
             )
             optimizer.step()
+
+        with torch.no_grad():
+            model.eval()
+            evaluate_model(model, train_loader, writer, device, reverse_class_mapping)
+            evaluate_model(model, valid_loader, writer, device, reverse_class_mapping)
+            model.train()
