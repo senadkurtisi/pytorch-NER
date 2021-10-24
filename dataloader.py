@@ -21,6 +21,8 @@ class CoNLLDataset(Dataset):
         # Load the vocabulary mappings
         with open(config["word2idx_path"], "r", encoding="utf8") as f:
             self._word2idx = json.load(f)
+        self._idx2word = {str(idx): word for word, idx in self._word2idx.items()}
+
         # Set the default value for the OOV tokens
         self._token_to_idx = defaultdict(lambda: self._token_to_idx["UNK"],
                                          self._token_to_idx)
