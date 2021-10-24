@@ -30,8 +30,8 @@ class CoNLLDataset(Dataset):
         )
 
         self._separator = separator
-        self._PADD_token = config["PADD_token"]
-        self._PADD_label = config["PADD_label"]
+        self._PAD_token = config["PADD_token"]
+        self._PAD_label = config["PADD_label"]
         self._max_len = config["max_len"]
 
         self._dataset_size = len(self.data)
@@ -52,8 +52,8 @@ class CoNLLDataset(Dataset):
         labels = labels[:self._max_len]
         padding_size = self._max_len - sample_size
         if padding_size > 0:
-            tokens += [self._PADD_token for _ in range(padding_size)]
-            labels += [self._PADD_label for _ in range(padding_size)]
+            tokens += [self._PAD_token for _ in range(padding_size)]
+            labels += [self._PAD_label for _ in range(padding_size)]
 
         # Apply the vocabulary mapping to the input tokens
         tokens = [self._word2idx[token] for token in tokens]
