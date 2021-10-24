@@ -27,9 +27,6 @@ class CoNLLDataset(Dataset):
         self._token_to_idx = defaultdict(lambda: self._token_to_idx["UNK"],
                                          self._token_to_idx)
 
-        with open(config["idx_to_token_path"], "r", encoding="utf8") as f:
-            self._idx_to_token = json.load(f)
-
         self._separator = separator
         self._PADD_token = config["PADD_token"]
         self._PADD_label = config["PADD_label"]
