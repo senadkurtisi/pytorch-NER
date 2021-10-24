@@ -67,4 +67,4 @@ class CoNLLDataset(Dataset):
         # Define the padding mask
         padding_mask = torch.ones([self._max_len, ])
         padding_mask[:sample_size] = 0.0
-        return tokens, labels
+        return tokens, labels, padding_mask
