@@ -30,8 +30,8 @@ class CoNLLDataset(Dataset):
         )
 
         self._separator = separator
-        self._PAD_token = config["PADD_token"]
-        self._PAD_label = config["PADD_label"]
+        self._PAD_token = config["PAD_token"]
+        self._PAD_label = config["PAD_label"]
         self._max_len = config["max_len"]
 
         self._dataset_size = len(self.data)
