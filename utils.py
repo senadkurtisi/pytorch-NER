@@ -42,12 +42,12 @@ def train_loop(config, writer, device):
     optimizer = torch.optim.AdamW(
         model.parameters(),
         lr=train_config["learning_rate"],
-        weight_decay=config["l2_penalty"]
+        weight_decay=train_config["l2_penalty"]
     )
 
     criterion = torch.nn.CrossEntropyLoss(reduction="none")
 
-    for epoch in train_config["num_of_epochs"]:
+    for epoch in range(train_config["num_of_epochs"]):
         print("Epoch:", epoch)
         model.train()
 
@@ -58,11 +58,18 @@ def train_loop(config, writer, device):
             optimizer.zero_grad()
             y_pred = model(x, padding_mask)
 
+            # Extract predictions and only for pre-padding tokens
             unpadded_mask = torch.logical_not(padding_mask)
             y = y[unpadded_mask]
             y_pred = y_pred[unpadded_mask]
 
-            loss = criterion()
+            # Calculate focal loss
+            ce_loss = criterion(y_pred, y)
+            y_pt = torch.exp(-ce_loss)
+            loss = (1 - y_pt) ** train_config["focal_gamma"]
+            loss *= ce_loss
+            loss = train_config["focal_alpha"] * loss.mean()
+
             # Update model weights
             loss.backward()
             torch.nn.utils.clip_grad_norm_(
