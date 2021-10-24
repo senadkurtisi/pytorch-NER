@@ -9,13 +9,19 @@ from model import NERClassifier
 from sklearn.metrics import accuracy_score, f1_score
 
 
-def evaluate_model(model, dataloader, writer, device, class_mapping=None):
+def evaluate_model(model, dataloader, writer, device, mode, step, class_mapping=None):
+    if mode not in ["Train", "Validation"]:
+        raise ValueError(
+            f"Invalid value for mode! Expected 'Train' or 'Validation but received {mode}"
+        )
+
     if class_mapping is None:
         raise ValueError("Argument @class_mapping not provided!")
 
     y_true_accumulator = []
     y_pred_accumulator = []
 
+    print("Started model evaluation. Step:", step)
     for x, y, padding_mask in dataloader:
         x, y = x.to(device), y.to(device)
         padding_mask = padding_mask.to(device)
@@ -45,19 +51,27 @@ def evaluate_model(model, dataloader, writer, device, class_mapping=None):
     y_pred_non_0 = y_pred_accumulator[non_O_ind]
     y_true_non_0 = y_true_accumulator[non_O_ind]
 
-    # Calculate accuracy
+    # Calculate and log accuracy
     accuracy_total = accuracy_score(y_true_accumulator, 
                                     y_pred_accumulator)
     accuracy_non_O = accuracy_score(y_true_non_0,
                                     y_pred_non_0)
+    writer.add_scalar(f"{mode}/Accuracy-Total",
+                      accuracy_total, step)
+    writer.add_scalar(f"{mode}/Accuracy-Non-O",
+                      accuracy_non_O, step)
 
-    # Calculate F1 score
+    # Calculate and log F1 score
     f1_total = f1_score(y_true_accumulator,
                         y_pred_accumulator,
                         average="weighted")
     f1_non_O = f1_score(y_true_non_0,
                         y_pred_non_0,
                         average="weighted")
+    writer.add_scalar(f"{mode}/F1-Total",
+                      f1_total, step)
+    writer.add_scalar(f"{mode}/F1-Non-O",
+                      f1_non_O, step)
 
 
 def train_loop(config, writer, device):
@@ -94,6 +108,7 @@ def train_loop(config, writer, device):
 
     # Load training configuration
     train_config = config["train_config"]
+    learning_rate = train_config["learning_rate"]
 
     # Prepare the model optimizer
     optimizer = torch.optim.AdamW(
@@ -103,12 +118,14 @@ def train_loop(config, writer, device):
     )
 
     criterion = torch.nn.CrossEntropyLoss(reduction="none")
+    train_step = 0
 
     for epoch in range(train_config["num_of_epochs"]):
         print("Epoch:", epoch)
         model.train()
 
         for x, y, padding_mask in train_loader:
+            train_step += 1
             x, y = x.to(device), y.to(device)
             padding_mask = padding_mask.to(device)
 
@@ -135,8 +152,14 @@ def train_loop(config, writer, device):
             )
             optimizer.step()
 
+            writer.add_scalar("Train/Step-Loss", loss.item(), train_step)
+            writer.add_scalar("Train/Learning-Rate", learning_rate, train_step)
+
         with torch.no_grad():
             model.eval()
-            evaluate_model(model, train_loader, writer, device, reverse_class_mapping)
-            evaluate_model(model, valid_loader, writer, device, reverse_class_mapping)
+            evaluate_model(model, train_loader, writer, device,
+                           "Train", epoch + 1, reverse_class_mapping)
+            evaluate_model(model, valid_loader, writer, device,
+                           "Validation", epoch + 1, reverse_class_mapping)
             model.train()
+        print()
