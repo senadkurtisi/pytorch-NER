@@ -34,3 +34,13 @@ def train_loop(config, writer, device):
 
     model = NERClassifier(config)
     model = model.to(device)
+
+    # Load training configuration
+    train_config = config["train_config"]
+
+    # Prepare the model optimizer
+    optimizer = torch.optim.AdamW(
+        model.parameters(),
+        lr=train_config["learning_rate"],
+        weight_decay=config["l2_penalty"]
+    )
