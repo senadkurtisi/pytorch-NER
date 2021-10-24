@@ -12,6 +12,7 @@ def train_loop(config, writer):
         config (dict): Contains configuration of the pipeline
         writer: tensorboardX writer object
     """
+    # Define dataloader hyper-parameters
     train_hyperparams = {
         "batch_size": config["batch_size"]["train"],
         "shuffle": True,
@@ -23,6 +24,7 @@ def train_loop(config, writer):
         "drop_last": True
     }
 
+    # Create dataloaders
     train_set = CoNLLDataset(config, config["dataset_path"]["train"])
     valid_set = CoNLLDataset(config, config["dataset_path"]["validation"])
     train_loader = DataLoader(train_set, **train_hyperparams)
