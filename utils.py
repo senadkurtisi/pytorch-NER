@@ -1,15 +1,47 @@
+import os
+import shutil
+import time
+
 import torch
 import numpy as np
 
+import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from dataloader import CoNLLDataset
 from model import NERClassifier
 
-from sklearn.metrics import accuracy_score, f1_score
+from sklearn.metrics import accuracy_score, f1_score, classification_report
+
+
+def log_gradient_norm(model, writer, step, mode, norm_type=2):
+    """Writes model param's gradients norm to tensorboard"""
+    total_norm = 0
+    for p in model.parameters():
+        if p.requires_grad:
+            param_norm = p.grad.data.norm(norm_type)
+            total_norm += param_norm.item() ** 2
+    total_norm = total_norm ** (1. / 2)
+    writer.add_scalar(f"Gradient/{mode}", total_norm, step)
+
+
+def save_checkpoint(model, start_time, epoch):
+    """Saves specified model checkpoint."""
+    target_dir = f"checkpoints\\{start_time}"
+    os.makedirs(target_dir, exist_ok=True)
+    # Save model weights
+    save_path = f"{target_dir}\\model_{epoch}.pth"
+    torch.save(model.state_dict(), save_path)
+    print("Model saved to:", save_path)
+    # Save model configuration
+    if not os.path.exists(f"{target_dir}\\config.json"):
+        shutil.copy(".\\config.json", f"{target_dir}\\config.json")
+        shutil.copy(".\\model.py", f"{target_dir}\\model.py")
+        shutil.copy(".\\utils.py", f"{target_dir}\\utils.py")
 
 
 def evaluate_model(model, dataloader, writer, device, mode, step, class_mapping=None):
+    """Evaluates the model performance."""
     if mode not in ["Train", "Validation"]:
         raise ValueError(
             f"Invalid value for mode! Expected 'Train' or 'Validation but received {mode}"
@@ -73,6 +105,8 @@ def evaluate_model(model, dataloader, writer, device, mode, step, class_mapping=
     writer.add_scalar(f"{mode}/F1-Non-O",
                       f1_non_O, step)
 
+    print(classification_report(y_true_accumulator, y_pred_accumulator, digits=4))
+
 
 def train_loop(config, writer, device):
     """Implements training of the model.
@@ -82,6 +116,8 @@ def train_loop(config, writer, device):
         writer: tensorboardX writer object
         device: device on which to map the model and data
     """
+    torch.manual_seed(config["seed"])
+    np.random.seed(config["seed"])
     reverse_class_mapping = {
         str(idx): cls_name for cls_name, idx in config["class_mapping"].items()
     }
@@ -103,6 +139,7 @@ def train_loop(config, writer, device):
     train_loader = DataLoader(train_set, **train_hyperparams)
     valid_loader = DataLoader(valid_set, **valid_hyperparams)
 
+    # Instantiate the model
     model = NERClassifier(config)
     model = model.to(device)
 
@@ -117,9 +154,16 @@ def train_loop(config, writer, device):
         weight_decay=train_config["l2_penalty"]
     )
 
-    criterion = torch.nn.CrossEntropyLoss(reduction="none")
-    train_step = 0
+    # Weights used for Cross-Entropy loss
+    # Calculated as log(1 / (class_count / train_samples))
+    # @class_count: Number of tokens in the corpus per each class
+    # @train_samples:  Total number of samples in the trains set
+    class_w = train_config["class_w"]
+    class_w = torch.tensor(class_w).to(device)
+    class_w /= class_w.sum()
 
+    train_step = 0
+    start_time = time.strftime("%b-%d_%H-%M-%S")
     for epoch in range(train_config["num_of_epochs"]):
         print("Epoch:", epoch)
         model.train()
@@ -137,19 +181,19 @@ def train_loop(config, writer, device):
             y = y[unpadded_mask]
             y_pred = y_pred[unpadded_mask]
 
-            # Calculate focal loss
-            ce_loss = criterion(y_pred, y)
-            y_pt = torch.exp(-ce_loss)
-            loss = (1 - y_pt) ** train_config["focal_gamma"]
-            loss *= ce_loss
-            loss = train_config["focal_alpha"] * loss.mean()
+            loss = F.cross_entropy(y_pred, y,
+                                   weight=class_w,
+                                   label_smoothing=train_config["smoothing"])
 
             # Update model weights
             loss.backward()
+            log_gradient_norm(model, writer, train_step, "Before")
             torch.nn.utils.clip_grad_norm_(
                 model.parameters(),
                 train_config["gradient_clipping"]
             )
+
+            log_gradient_norm(model, writer, train_step, "Clipped")
             optimizer.step()
 
             writer.add_scalar("Train/Step-Loss", loss.item(), train_step)
@@ -158,8 +202,10 @@ def train_loop(config, writer, device):
         with torch.no_grad():
             model.eval()
             evaluate_model(model, train_loader, writer, device,
-                           "Train", epoch + 1, reverse_class_mapping)
+                           "Train", epoch, reverse_class_mapping)
             evaluate_model(model, valid_loader, writer, device,
-                           "Validation", epoch + 1, reverse_class_mapping)
+                           "Validation", epoch, reverse_class_mapping)
             model.train()
+
+        save_checkpoint(model, start_time, epoch)
         print()
