@@ -1,0 +1,65 @@
+{
+    "dataset_path": {
+        "train": ".\\dataset\\train.txt",
+        "validation": ".\\dataset\\validation.txt",
+        "test": ".\\dataset\\test.txt"
+    },
+
+    "word2idx_path": ".\\dataset\\word2idx.json",
+    "embeddings_path": ".\\dataset\\embeddings.txt",
+
+    "class_mapping": {
+        "O": 0,
+        "B-PER": 1,
+        "I-PER": 2,
+        "B-ORG": 3,
+        "I-ORG": 4,
+        "B-LOC": 5,
+        "I-LOC": 6,
+        "B-MISC": 7,
+        "I-MISC": 8
+    },
+
+    "OOV_token": "<unk>",
+    "PAD_token": "<pad>",
+    "PAD_label": -1,
+    "PAD_idx": 1,
+    "max_len": 128,
+
+    "use_gpu": true,
+    "seed": 26,
+
+    "batch_size": {
+        "train": 128,
+        "validation": 32,
+        "test": 32
+    },
+
+    "embedding_dim": 100,
+    "num_of_transformer_layers": 2,
+    "transformer_embedding_dim": 128,
+    "transformer_ff_dim": 128,
+    "attention_heads": 8,
+    "dropout": 0.5,
+
+    "train_config": {
+        "num_of_epochs": 150,
+        "learning_rate": 0.000075,
+        "warmup_steps": 6000,
+        "l2_penalty": 0.5,
+        "gradient_clipping": 0.5,
+        "lr_gamma": 0.9990,
+        "focal_alpha": 0.8,
+        "focal_gamma": 2.0,
+        "smoothing": 0.0,
+        "class_w": [
+            0.18209508, 3.43311605,
+            3.81135119, 3.47707575,
+            4.0112801, 3.35299122,
+            5.17214967, 4.0863506,
+            5.18262097
+        ],
+        "weight_correction": 8.25
+    }
+
+}
