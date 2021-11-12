@@ -3,16 +3,31 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class ScaleNorm(nn.Module):
+    """Represents Scale Norm layer
+    
+    reference: https://github.com/tnq177/transformers_without_tears
+    """
+    def __init__(self, scale, eps=1e-5):
+        super(ScaleNorm, self).__init__()
+        self.scale = nn.Parameter(torch.tensor(scale))
+        self.eps = eps
+
+    def forward(self, x):
+        norm = self.scale / torch.norm(x, dim=-1, keepdim=True).clamp(min=self.eps)
+        return x * norm
+
+
 class TransformerEncoder(nn.Module):
     """Represents the encoder of the "Attention is All You Need" Transformer"""
 
     def __init__(self, num_layers, num_heads, d_model, ff_dim, p_dropout):
         """Initializes the module."""
         super(TransformerEncoder, self).__init__()
-        self.layer_norm = nn.LayerNorm(d_model)
         self.encoder_blocks = nn.ModuleList([
             TransformerEncoderLayer(num_heads, d_model, ff_dim, p_dropout) for _ in range(num_layers)
         ])
+        self.scale_norm = ScaleNorm(d_model ** 0.5)
 
     def forward(self, x, padd_mask=None):
         """Performs forward pass of the module."""
@@ -21,7 +36,7 @@ class TransformerEncoder(nn.Module):
             x, attn_weights = encoder_layer(x, padd_mask)
             attn_weights_accumulator.append(attn_weights)
 
-        x = self.layer_norm(x)
+        x = self.scale_norm(x)
         return x, attn_weights_accumulator
 
 
@@ -31,10 +46,11 @@ class TransformerEncoderLayer(nn.Module):
     def __init__(self, num_heads, d_model, ff_dim, p_dropout):
         """Initializes the module."""
         super(TransformerEncoderLayer, self).__init__()
+        self.scale_norm_1 = ScaleNorm(d_model ** 0.5)
         self.multi_head_attention = MultiHeadAttention(num_heads, d_model)
         self.dropout_1 = nn.Dropout(p_dropout)
-        self.layer_norm_1 = nn.LayerNorm(d_model)
 
+        self.scale_norm_2 = ScaleNorm(d_model ** 0.5)
         self.ff_net = nn.Sequential(
             nn.Linear(d_model, ff_dim),
             nn.ReLU(),
@@ -42,19 +58,18 @@ class TransformerEncoderLayer(nn.Module):
             nn.Linear(ff_dim, d_model)
         )
         self.dropout_3 = nn.Dropout(p_dropout)
-        self.layer_norm_2 = nn.LayerNorm(d_model)
 
     def forward(self, x, padd_mask=None):
         """Performs forward pass of the module."""
+        x = self.scale_norm_1(x)
         skip_connection = x
         attn_output, attn_weights = self.multi_head_attention(query=x, key=x, value=x, padd_mask=padd_mask)
         x = skip_connection + self.dropout_1(attn_output)
-        x = self.layer_norm_1(x)
 
+        x = self.scale_norm_2(x)
         skip_connection = x
         x = self.ff_net(x)
         x = skip_connection + self.dropout_3(x)
-        x = self.layer_norm_2(x)
 
         return x, attn_weights
 
