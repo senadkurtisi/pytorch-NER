@@ -9,10 +9,10 @@ class TransformerEncoder(nn.Module):
     def __init__(self, num_layers, num_heads, d_model, ff_dim, p_dropout):
         """Initializes the module."""
         super(TransformerEncoder, self).__init__()
-        self.encoder_blocks = [
-            TransformerEncoderLayer(num_heads, d_model, ff_dim, p_dropout) for _ in range(num_layers)
-        ]
         self.layer_norm = nn.LayerNorm(d_model)
+        self.encoder_blocks = nn.ModuleList([
+            TransformerEncoderLayer(num_heads, d_model, ff_dim, p_dropout) for _ in range(num_layers)
+        ])
 
     def forward(self, x, padd_mask=None):
         """Performs forward pass of the module."""
@@ -92,7 +92,7 @@ class MultiHeadAttention(nn.Module):
             attn_weights (torch.Tensor): Attention weights for each token
         """
         seq_len, batch_size, d_model = query.shape
-        if padd_mask:
+        if padd_mask is not None:
             assert padd_mask.shape == (batch_size, seq_len), f"Invalid mask shape! Expected shape of ({batch_size}, {seq_len})"
             padd_mask = padd_mask.view(batch_size, 1, 1, seq_len). \
                 expand(-1, self.num_heads, -1, -1). \
@@ -105,7 +105,7 @@ class MultiHeadAttention(nn.Module):
 
         # Scores shape: (bsz * head_dim, seq_len, seq_len)
         attn_scores = torch.bmm(query, key.transpose(-2, -1))
-        if padd_mask:
+        if padd_mask is not None:
             attn_scores.masked_fill_(padd_mask == torch.tensor(True), float("-inf"))
         attn_scores /= (self.d_head ** 0.5)
         attn_weights = F.softmax(attn_scores, dim=-1)
