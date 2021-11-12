@@ -3,6 +3,28 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class TransformerEncoder(nn.Module):
+    """Represents the encoder of the "Attention is All You Need" Transformer"""
+
+    def __init__(self, EncoderLayerCLS, num_layers, num_heads, d_model, ff_dim, p_dropout):
+        """Initializes the module."""
+        super(TransformerEncoder, self)
+        self.encoder_blocks = [
+            TransformerEncoderLayer(num_heads, d_model, ff_dim, p_dropout) for _ in range(num_layers)
+        ]
+        self.layer_norm = nn.LayerNorm(d_model)
+
+    def forward(self, x, padd_mask=None):
+        """Performs forward pass of the module."""
+        attn_weights_accumulator = []
+        for encoder_layer in self.encoder_blocks:
+            x, attn_weights = encoder_layer(x, padd_mask)
+            attn_weights_accumulator.append(attn_weights)
+
+        x = self.layer_norm(x)
+        return x, attn_weights_accumulator
+
+
 class TransformerEncoderLayer(nn.Module):
     """Represents a single Transformer Encoder Block."""
 
