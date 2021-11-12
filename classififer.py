@@ -8,9 +8,10 @@ from transformer import TransformerEncoder
 
 
 class NERClassifier(nn.Module):
-    """Represents model which classifies """
+    """Represents model which classifies named entities in the given body of text."""
 
     def __init__(self, config):
+        """Initializes the module."""
         super(NERClassifier, self).__init__()
         num_classes = len(config["class_mapping"])
         embedding_dim = config["embedding_dim"]
@@ -45,6 +46,7 @@ class NERClassifier(nn.Module):
         self.classifier = nn.Linear(transformer_embedding_dim, num_classes)
 
     def forward(self, x, padding_mask):
+        """Performs forward pass of the module."""
         x = self.embedding_layer(x)
         x = self.entry_mapping(x)
         x = F.leaky_relu(x)
