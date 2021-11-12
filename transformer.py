@@ -125,9 +125,3 @@ class MultiHeadAttention(nn.Module):
         output = self.out_projection(attn_output)
 
         return output, attn_weights
-
-
-if __name__ == "__main__":
-    model = TransformerEncoder(TransformerEncoderLayer, 6, 8, 512, 1024, 0.3)
-    x = torch.rand(3, 16, 512)
-    model(x)
