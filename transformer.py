@@ -8,7 +8,7 @@ class TransformerEncoder(nn.Module):
 
     def __init__(self, EncoderLayerCLS, num_layers, num_heads, d_model, ff_dim, p_dropout):
         """Initializes the module."""
-        super(TransformerEncoder, self)
+        super(TransformerEncoder, self).__init__()
         self.encoder_blocks = [
             TransformerEncoderLayer(num_heads, d_model, ff_dim, p_dropout) for _ in range(num_layers)
         ]
@@ -127,7 +127,7 @@ class MultiHeadAttention(nn.Module):
         return output, attn_weights
 
 
-# if __name__ == "__main__":
-#     model = TransformerEncoderLayer(8, 512, 1024, 0.3)
-#     x = torch.rand(3, 16, 512)
-#     model(x)
+if __name__ == "__main__":
+    model = TransformerEncoder(TransformerEncoderLayer, 6, 8, 512, 1024, 0.3)
+    x = torch.rand(3, 16, 512)
+    model(x)
