@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from dataloader import CoNLLDataset
-from model import NERClassifier
+from classififer import NERClassifier
 
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 

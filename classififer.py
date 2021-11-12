@@ -54,7 +54,7 @@ class NERClassifier(nn.Module):
         x = self.positional_encodings(x)
 
         x = x.permute(1, 0, 2)
-        x = self.transformer_encoder(x, src_key_padding_mask=padding_mask)
+        x, _ = self.transformer_encoder(x, padding_mask)
         x = x.permute(1, 0, 2)
 
         y_pred = self.classifier(x)
