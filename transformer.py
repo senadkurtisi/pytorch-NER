@@ -3,6 +3,40 @@ import torch.nn as nn
 import torch.nn.functional as F
 
 
+class TransformerEncoderLayer(nn.Module):
+    """Represents a single Transformer Encoder Block."""
+
+    def __init__(self, num_heads, d_model, ff_dim, p_dropout):
+        """Initializes the module."""
+        super(TransformerEncoderLayer, self).__init__()
+        self.multi_head_attention = MultiHeadAttention(num_heads, d_model)
+        self.dropout_1 = nn.Dropout(p_dropout)
+        self.layer_norm_1 = nn.LayerNorm(d_model)
+
+        self.ff_net = nn.Sequential(
+            nn.Linear(d_model, ff_dim),
+            nn.ReLU(),
+            nn.Dropout(p_dropout),
+            nn.Linear(ff_dim, d_model)
+        )
+        self.dropout_3 = nn.Dropout(p_dropout)
+        self.layer_norm_2 = nn.LayerNorm(d_model)
+
+    def forward(self, x, padd_mask=None):
+        """Performs forward pass of the module."""
+        skip_connection = x
+        attn_output, attn_weights = self.multi_head_attention(query=x, key=x, value=x, padd_mask=padd_mask)
+        x = skip_connection + self.dropout_1(attn_output)
+        x = self.layer_norm_1(x)
+
+        skip_connection = x
+        x = self.ff_net(x)
+        x = skip_connection + self.dropout_3(x)
+        x = self.layer_norm_2(x)
+
+        return x, attn_weights
+
+
 class MultiHeadAttention(nn.Module):
     """Represents Multi-Head Attention Module"""
 
@@ -69,3 +103,9 @@ class MultiHeadAttention(nn.Module):
         output = self.out_projection(attn_output)
 
         return output, attn_weights
+
+
+# if __name__ == "__main__":
+#     model = TransformerEncoderLayer(8, 512, 1024, 0.3)
+#     x = torch.rand(3, 16, 512)
+#     model(x)
