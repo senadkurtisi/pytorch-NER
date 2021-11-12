@@ -4,7 +4,7 @@ import torch.nn.functional as F
 import numpy as np
 
 from model import PositionalEncodings
-from transformer import TransformerEncoderLayer, TransformerEncoder
+from transformer import TransformerEncoder
 
 
 class NERClassifier(nn.Module):
@@ -36,7 +36,6 @@ class NERClassifier(nn.Module):
         )
 
         self.transformer_encoder = TransformerEncoder(
-            TransformerEncoderLayer,
             num_of_transformer_layers,
             attention_heads,
             transformer_embedding_dim,

@@ -6,7 +6,7 @@ import torch.nn.functional as F
 class TransformerEncoder(nn.Module):
     """Represents the encoder of the "Attention is All You Need" Transformer"""
 
-    def __init__(self, EncoderLayerCLS, num_layers, num_heads, d_model, ff_dim, p_dropout):
+    def __init__(self, num_layers, num_heads, d_model, ff_dim, p_dropout):
         """Initializes the module."""
         super(TransformerEncoder, self).__init__()
         self.encoder_blocks = [
