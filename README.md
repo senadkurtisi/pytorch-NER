@@ -18,7 +18,8 @@ Table of Contents:
 
 ## Problem Formulation
 
-Named Entity Recognition is an NLP problem in which we have a body of text (example: a sentence) and we try to classify if each word/subword of this input sequence represents a *Named Entity*. <br><br>
+Named Entity Recognition is an NLP problem in which we have a body of text (example: a sentence) and we try to classify if each word/subword of this input sequence represents a *Named Entity*.
+This can be further expanded by also trying to predict not only if an input token is a named entity, but also to which class that named entity belongs to. For example: a person, name of the city etc. <br>
 An example for this would be:
 <br>
 <br>
@@ -26,25 +27,20 @@ An example for this would be:
   <img src="imgs\ner_example.jpg" />
 </p>
 
-This can be further expanded by also trying to predict not only if an input token is a named entity, but also to which class that named entity belongs to. For example: a person, name of the city etc.
-
 ## Dataset
 [CoNLL2003](https://huggingface.co/datasets/conll2003) is one of the standard datasets used in the area of named entity recognition.
 
 ### Dataset split 
-The dataset is originally split into three subsets:
-* training
-* validation
-* test
+The dataset is originaly split into *train, validation and test* subsets.
 
 <p align="center">
   <img src="imgs\subsets.jpg" />
 </p>
 
 ### Labels
-Each sample in the dataset is defined by input sequence and labels for each element of the sequence. These labels fall into **10 different categories**. <br>
+Each sample in the dataset is defined by input sequence and labels for each element of the sequence. These labels fall into **9 different categories**. <br>
 
-These categories are:
+These categories can be described by the following list:
 * NULL - not an entity
 * PER - Person
 * ORG - Organization
@@ -61,16 +57,22 @@ Below we can see the distribution of classes in the training set. As we can see 
 
 ## Architecture
 
-Model used in this implementation is the **Encoder part** of the famous **Transformer** architecture. <br>This repo contains custom implementation of the self-attention mechanism originally presented in the "***Attention is All You Need***" [paper](https://arxiv.org/pdf/1706.03762.pdf) by Vaswani et al. <br>Using the [Transformer Encoder](https://pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html) module implemented in PyTorch is a viable and a high quality option. I implemented this from scratch for practice purposes.
+Model used in this implementation is the **Encoder part** of the famous **Transformer** architecture
+
+This repo contains custom implementation of the self-attention mechanism originally presented in the "***Attention is All You Need***" [paper](https://arxiv.org/pdf/1706.03762.pdf) by Vaswani et al
+
+Using the [Transformer Encoder](https://pytorch.org/docs/stable/generated/torch.nn.TransformerEncoder.html) module implemented in PyTorch is a viable and a high quality option. I implemented this from scratch for practice purposes.
 
 The architecture contains some modifications which were implemented since they improved the performance.
 
 
 ## Model Performance
 
-Due to the dataset being hihgly unbalanced [F1 score](https://en.wikipedia.org/wiki/F-score) was used as a primary metric for model evaluation.<br>
-Besides that, the majority of the dataset tokens belongs to the **O** class which corresponds to the non-named entity.<br><br>
-Therefore, a performance comparison is given below for each of three subsets, on two slices of data:
+Due to the dataset being highly unbalanced [F1 score](https://en.wikipedia.org/wiki/F-score) was used as a primary metric for model evaluation.<br>
+Since majority of the dataset tokens belongs to the **O** class which corresponds to the non-named entity model performance was evalauted in two ways.
+
+
+Performance comparison is given below for each of three subsets, on two slices of data:
 * All input tokens
 * Named Entity tokens i.e. tokens which belong to classes which aren't ***O*** class. 
 
@@ -79,7 +81,7 @@ Therefore, a performance comparison is given below for each of three subsets, on
   <img src="imgs\f1_score.jpg" />
 </p>
 
-We can see that the problem difficulty illustrated in the bar plot shown above. Model is having tough time maintaining generalization power to due to high imbalance of the dataset. We can see that the gap between training set and validation and test sets is smaller in the case when we use tokens which belong to the ***O*** class.
+We can see the problem difficulty illustrated in the bar plot shown above. Model is having tough time maintaining generalization power to due to dataset being highly imbalanced. We can see that the gap between training set and validation and test sets is smaller in the case when we use all of the tokens.
 
 ## Setup and Instructions
 1. Open Anaconda Prompt and navigate to the directory of this repo by using: ```cd PATH_TO_THIS_REPO ```
@@ -88,7 +90,7 @@ We can see that the problem difficulty illustrated in the bar plot shown above. 
 4. Download GloVe embeddings from the following [link](https://nlp.stanford.edu/projects/glove/). Choose the one marked as **"glove.6B.zip"**
 5. In the [configuration file](config.json) modify the ``` glove_dir ``` entry and change it to the path to directory where you have previoulsy downloaded the **GloVe** embeddings.
 6. Run ``` python prepare_dataset.py ```. This will perform the following steps:
-    * Download the **CoNLL2003** dataset using the HuggingFace dataset API
+    * Download the **CoNLL2003** dataset using the **HuggingFace dataset API**
     * Process train, validation and test subsets and save them to ``` dataset ``` directory
     * Generate the vocabulary using tokens from the training set
     * Extract **GloVe** embeddings for tokens present in previously created vocabulary
