@@ -1,4 +1,5 @@
 import os
+import json
 import shutil
 from collections import Counter
 
@@ -111,7 +112,7 @@ def download_dataset(dataset_dir):
     save_subset(train_set_processed, dataset_dir, "train")
     save_subset(valid_set_processed, dataset_dir, "validation")
     save_subset(test_set_processed, dataset_dir, "test")
-    print("Dataset downloaded and processed.")
+    print("\nDataset downloaded and processed.")
 
     return train_set, valid_set, test_set
 
@@ -152,22 +153,30 @@ def create_vocabulary(train_set, vocab_size):
         vocab[token] = ind
         ind += 1
 
-    print("Created vocabulary of {} tokens.".format(ind))
+    print("\nCreated vocabulary of {} tokens.".format(ind))
     return vocab
 
 
-def extract_embeddings(glove_dir, save_path, vocab, embedding_dim):
+def extract_embeddings(config, vocab):
     """Extracts GloVe word embeddings for words in vocab.
 
     Arguments:
-        save_path (str): Path to which to save
+        config (object): Contains dataset & pipeline configuration info
         vocab (dict): word - ordinal number mapping
     """
+    embeddings_config = config["embeddings"]
+    save_path_emb = embeddings_config["path"]
+    embedding_dim = embeddings_config["size"]
+
+    save_path_map = config["word2idx_path"]
+    # Used for finding the embedding vector for each token
+    word_to_idx = {"<unk>": 0, "<pad>": 1}
     vectors = []
 
     idx = 0
+    vocab_bias = len(word_to_idx)
     embedding_file_name = "glove.6B.{}d.txt".format(embedding_dim)
-    embeddings_path = os.path.join(glove_dir, embedding_file_name)
+    embeddings_path = os.path.join(config["glove_dir"], embedding_file_name)
     with open(embeddings_path, "rb") as f:
         for line in f:
             line = line.decode().split()
@@ -176,6 +185,7 @@ def extract_embeddings(glove_dir, save_path, vocab, embedding_dim):
             word = word.strip().lower()
             # Remember the embedding vector if the word is in the vocab
             if word in vocab.keys():
+                word_to_idx[word] = idx + vocab_bias
                 embedding_vec = np.array(line[1:], dtype="float")
                 vectors += [embedding_vec]
                 idx += 1
@@ -188,6 +198,10 @@ def extract_embeddings(glove_dir, save_path, vocab, embedding_dim):
 
     vectors = np.vstack([unk_embedding, pad_embedding, vectors])
     # Save extracted embeddings
-    np.savetxt(save_path, vectors)
+    np.savetxt(save_path_emb, vectors)
+    # Save token:index mapping
+    with open(save_path_map, "w", encoding="utf8") as f:
+        json.dump(word_to_idx, f)
 
-    print("Extracted GloVe embeddings for all tokens in the training set.", "Embedding vectors size:", embedding_dim)
+    print("\nExtracted GloVe embeddings for all tokens in the training set.") 
+    print("Number of tokens:", vectors.shape[0], "Embedding vectors size:", embedding_dim)

@@ -11,9 +11,4 @@ if __name__ == "__main__":
     train_set, _, _ = download_dataset(config["dataset_dir"])
     vocab = create_vocabulary(train_set, config["vocab_size"])
     # Extract GloVe embeddings for tokens present in the training set vocab
-    extract_embeddings(
-        glove_dir=config["glove_dir"],
-        save_path=config["embeddings"]["path"],
-        vocab=vocab,
-        embedding_dim=config["embeddings"]["size"]
-    )
+    extract_embeddings(config, vocab,)
