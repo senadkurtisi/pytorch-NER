@@ -1,6 +1,6 @@
 import json
-import torch
 
+import torch
 from tensorboardX import SummaryWriter
 
 from trainer import train_loop
