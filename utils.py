@@ -9,7 +9,7 @@ import torch.nn.functional as F
 from torch.utils.data import DataLoader
 
 from dataloader import CoNLLDataset
-from classififer import NERClassifier
+from classifier import NERClassifier
 
 from sklearn.metrics import accuracy_score, f1_score, classification_report
 
@@ -36,7 +36,8 @@ def save_checkpoint(model, start_time, epoch):
     # Save model configuration
     if not os.path.exists(f"{target_dir}\\config.json"):
         shutil.copy(".\\config.json", f"{target_dir}\\config.json")
-        shutil.copy(".\\model.py", f"{target_dir}\\model.py")
+        shutil.copy(".\\classifier.py", f"{target_dir}\\classifier.py")
+        shutil.copy(".\\transformer.py", f"{target_dir}\\transformer.py")
         shutil.copy(".\\utils.py", f"{target_dir}\\utils.py")
 
 
@@ -53,7 +54,7 @@ def evaluate_model(model, dataloader, writer, device, mode, step, class_mapping=
     y_true_accumulator = []
     y_pred_accumulator = []
 
-    print("Started model evaluation. Step:", step)
+    print("Started model evaluation.")
     for x, y, padding_mask in dataloader:
         x, y = x.to(device), y.to(device)
         padding_mask = padding_mask.to(device)
@@ -181,18 +182,13 @@ def train_loop(config, writer, device):
             y = y[unpadded_mask]
             y_pred = y_pred[unpadded_mask]
 
-            loss = F.cross_entropy(y_pred, y,
-                                   weight=class_w,
-                                   label_smoothing=train_config["smoothing"])
+            loss = F.cross_entropy(y_pred, y, weight=class_w)
 
             # Update model weights
             loss.backward()
-            log_gradient_norm(model, writer, train_step, "Before")
-            torch.nn.utils.clip_grad_norm_(
-                model.parameters(),
-                train_config["gradient_clipping"]
-            )
 
+            log_gradient_norm(model, writer, train_step, "Before")
+            torch.nn.utils.clip_grad_norm_(model.parameters(), train_config["gradient_clipping"])
             log_gradient_norm(model, writer, train_step, "Clipped")
             optimizer.step()
 
