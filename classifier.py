@@ -3,8 +3,38 @@ import torch.nn as nn
 import torch.nn.functional as F
 import numpy as np
 
-from model import PositionalEncodings
-from transformer import TransformerEncoder
+from transformer import TransformerEncoder, PositionalEncodings
+
+
+class ResidualBlock(nn.Module):
+    """Represents 1D version of the residual block: https://arxiv.org/abs/1512.03385"""
+
+    def __init__(self, input_dim):
+        """Initializes the module."""
+        super(ResidualBlock, self).__init__()
+        self.block = nn.Sequential(
+            nn.Linear(input_dim, input_dim),
+            nn.LeakyReLU(),
+            nn.Linear(input_dim, input_dim),
+        )
+
+    def forward(self, x):
+        """Performs forward pass of the module."""
+        skip_connection = x
+        x = self.block(x)
+        x = skip_connection + x
+        return x
+
+
+class Normalize(nn.Module):
+    def __init__(self, eps=1e-5):
+        super(Normalize, self).__init__()
+        self.register_buffer("eps", torch.Tensor([eps]))
+
+    def forward(self, x, dim=-1):
+        norm = x.norm(2, dim=dim).unsqueeze(-1)
+        x = self.eps * (x / norm)
+        return x
 
 
 class NERClassifier(nn.Module):
@@ -30,12 +60,14 @@ class NERClassifier(nn.Module):
         )
 
         self.entry_mapping = nn.Linear(embedding_dim, transformer_embedding_dim)
+        self.res_block = ResidualBlock(transformer_embedding_dim)
+
         self.positional_encodings = PositionalEncodings(
             config["max_len"],
             transformer_embedding_dim,
             dropout
         )
-
+        self.normalize = Normalize()
         self.transformer_encoder = TransformerEncoder(
             num_of_transformer_layers,
             attention_heads,
@@ -47,12 +79,18 @@ class NERClassifier(nn.Module):
 
     def forward(self, x, padding_mask):
         """Performs forward pass of the module."""
+        # Get token embeddings for each word in a sequence
         x = self.embedding_layer(x)
+
+        # Map input tokens to the transformer embedding dim
         x = self.entry_mapping(x)
         x = F.leaky_relu(x)
+        x = self.res_block(x)
+        x = F.leaky_relu(x)
 
+        # Leverage the self-attention mechanism on the input sequence
         x = self.positional_encodings(x)
-
+        x = self.normalize(x)
         x = x.permute(1, 0, 2)
         x, _ = self.transformer_encoder(x, padding_mask)
         x = x.permute(1, 0, 2)
