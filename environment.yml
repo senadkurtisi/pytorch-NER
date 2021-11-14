@@ -1,0 +1,16 @@
+name: ner-pytorch
+channels:
+  - pytorch
+  - huggingface
+  - anaconda
+  - conda-forge
+dependencies:
+  - cudatoolkit=10.2
+  - python=3.9.7
+  - scikit-learn=1.0
+  - tensorboardx=2.4
+  - pip
+  - pytorch=1.10.0
+  - pip:
+    - datasets==1.14.0
+    - numpy==1.21.3
