@@ -33,12 +33,13 @@ def save_checkpoint(model, start_time, epoch):
     save_path = f"{target_dir}\\model_{epoch}.pth"
     torch.save(model.state_dict(), save_path)
     print("Model saved to:", save_path)
+
     # Save model configuration
     if not os.path.exists(f"{target_dir}\\config.json"):
-        shutil.copy(".\\config.json", f"{target_dir}\\config.json")
-        shutil.copy(".\\classifier.py", f"{target_dir}\\classifier.py")
-        shutil.copy(".\\transformer.py", f"{target_dir}\\transformer.py")
-        shutil.copy(".\\utils.py", f"{target_dir}\\utils.py")
+        shutil.copy("config.json", os.path.join(target_dir, "config.json"))
+        shutil.copy("classifier.py", os.path.join(target_dir, "classifier.py"))
+        shutil.copy("transformer.py", os.path.join(target_dir, "transformer.py"))
+        shutil.copy("utils.py", os.path.join(target_dir, "utils.py"))
 
 
 def evaluate_model(model, dataloader, writer, device, mode, step, class_mapping=None):
