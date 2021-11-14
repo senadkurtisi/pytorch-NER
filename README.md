@@ -85,13 +85,14 @@ We can see that the problem difficulty illustrated in the bar plot shown above. 
 1. Open Anaconda Prompt and navigate to the directory of this repo by using: ```cd PATH_TO_THIS_REPO ```
 2. Execute ``` conda env create -f environment.yml ``` This will set up an environment with all necessary dependencies. 
 3. Activate previously created environment by executing: ``` conda activate ner-pytorch ```
-4. Download GloVe embeddings from the following [link](https://nlp.stanford.edu/projects/glove/). Choose the one marked as **"glove.6B.zip"**.
-5. Run ``` python prepare_dataset.py ```. This will perform the following steps:
+4. Download GloVe embeddings from the following [link](https://nlp.stanford.edu/projects/glove/). Choose the one marked as **"glove.6B.zip"**
+5. In the [configuration file](config.json) modify the ``` glove_dir ``` entry and change it to the path to directory where you have previoulsy downloaded the **GloVe** embeddings.
+6. Run ``` python prepare_dataset.py ```. This will perform the following steps:
     * Download the **CoNLL2003** dataset using the HuggingFace dataset API
     * Process train, validation and test subsets and save them to ``` dataset ``` directory
     * Generate the vocabulary using tokens from the training set
     * Extract **GloVe** embeddings for tokens present in previously created vocabulary
-4. Run ``` python main.py ``` to initiate the training of the model </br>
+7. Run ``` python main.py ``` to initiate the training of the model </br>
    
 ## Acknowledgements
 These resources were very helpful for me:
