@@ -1,4 +1,4 @@
-# Named Entity Recognition in PyTorch using Transformers
+## Named Entity Recognition in PyTorch using Transformers 💻💥
 
 **Quick Intro** <br></br>
 This is an implementation of **Named Entity Recognition** model in **PyTorch**.
