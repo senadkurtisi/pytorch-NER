@@ -45,7 +45,11 @@ class ScaleNorm(nn.Module):
 
 
 class TransformerEncoder(nn.Module):
-    """Represents the encoder of the "Attention is All You Need" Transformer"""
+    """Represents the encoder of the "Attention is All You Need" Transformer.
+
+    Original architecture does not contain 'ScaleNorm' layers.
+    I have used them since they improve the convergence of the model.
+    """
 
     def __init__(self, num_layers, num_heads, d_model, ff_dim, p_dropout):
         """Initializes the module.
@@ -75,7 +79,11 @@ class TransformerEncoder(nn.Module):
 
 
 class TransformerEncoderLayer(nn.Module):
-    """Represents a single Transformer Encoder Block."""
+    """Represents a single Transformer Encoder Block.
+
+    Original architecture does not contain 'ScaleNorm' layers.
+    I have used them since they improve the convergence of the model.
+    """
 
     def __init__(self, num_heads, d_model, ff_dim, p_dropout):
         """Initializes the module.
