@@ -26,17 +26,6 @@ class ResidualBlock(nn.Module):
         return x
 
 
-class Normalize(nn.Module):
-    def __init__(self, eps=1e-5):
-        super(Normalize, self).__init__()
-        self.register_buffer("eps", torch.Tensor([eps]))
-
-    def forward(self, x, dim=-1):
-        norm = x.norm(2, dim=dim).unsqueeze(-1)
-        x = self.eps * (x / norm)
-        return x
-
-
 class NERClassifier(nn.Module):
     """Represents model which classifies named entities in the given body of text."""
 
@@ -90,7 +79,6 @@ class NERClassifier(nn.Module):
 
         # Leverage the self-attention mechanism on the input sequence
         x = self.positional_encodings(x)
-        x = self.normalize(x)
         x = x.permute(1, 0, 2)
         x, _ = self.transformer_encoder(x, padding_mask)
         x = x.permute(1, 0, 2)
