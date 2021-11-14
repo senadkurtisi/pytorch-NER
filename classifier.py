@@ -56,7 +56,7 @@ class NERClassifier(nn.Module):
             transformer_embedding_dim,
             dropout
         )
-        self.normalize = Normalize()
+
         self.transformer_encoder = TransformerEncoder(
             num_of_transformer_layers,
             attention_heads,
