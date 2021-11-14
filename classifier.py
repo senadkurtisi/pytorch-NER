@@ -33,7 +33,7 @@ class NERClassifier(nn.Module):
         """Initializes the module."""
         super(NERClassifier, self).__init__()
         num_classes = len(config["class_mapping"])
-        embedding_dim = config["embedding_dim"]
+        embedding_dim = config["embeddings"]["size"]
         num_of_transformer_layers = config["num_of_transformer_layers"]
         transformer_embedding_dim = config["transformer_embedding_dim"]
         attention_heads = config["attention_heads"]
@@ -41,7 +41,7 @@ class NERClassifier(nn.Module):
         dropout = config["dropout"]
 
         # Load pretrained word embeddings
-        word_embeddings = torch.Tensor(np.loadtxt(config["embeddings_path"]))
+        word_embeddings = torch.Tensor(np.loadtxt(config["embeddings"]["path"]))
         self.embedding_layer = nn.Embedding.from_pretrained(
             word_embeddings,
             freeze=True,
