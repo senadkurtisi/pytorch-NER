@@ -3,7 +3,7 @@ import torch
 
 from tensorboardX import SummaryWriter
 
-from utils import train_loop
+from trainer import train_loop
 
 
 def main():
